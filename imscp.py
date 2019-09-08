@@ -21,7 +21,7 @@ def extract_from_zip(zip_file_path, license):
 
 
 def extract_from_dir(ims_dir, license):
-    """Return a list of """
+    """Return a list of content nodes from an IMSCP directory."""
     print('Parsing imsmanifest.xml in %s' % ims_dir)
     manifest_path = os.path.join(ims_dir, 'imsmanifest.xml')
     manifest_root = etree.parse(manifest_path).getroot()
