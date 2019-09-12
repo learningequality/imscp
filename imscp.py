@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-
+import itertools
+import logging
 from lxml import etree
 import os
 import re
@@ -7,28 +7,26 @@ import shutil
 import tempfile
 import zipfile
 
-from ricecooker.classes import nodes, files, licenses
-from ricecooker.utils.zip import create_predictable_zip
-from ricecooker.utils.browser import preview_in_browser
 
+def extract_from_zip(zip_file_path, license, extract_path=None):
+    if not extract_path:
+        extract_path = tempfile.mkdtemp()
 
-def extract_from_zip(zip_file_path, license):
-    with tempfile.TemporaryDirectory() as extract_path:
-        print('Extracting zip file %s to %s' % (zip_file_path, extract_path))
-        zip_file = zipfile.ZipFile(zip_file_path)
-        zip_file.extractall(extract_path)
-        return extract_from_dir(extract_path, license)
+    logging.info('Extracting zip file %s to %s' % (zip_file_path, extract_path))
+    zip_file = zipfile.ZipFile(zip_file_path)
+    zip_file.extractall(extract_path)
+    return extract_from_dir(extract_path, license)
 
 
 def extract_from_dir(ims_dir, license):
-    """Return a list of content nodes from an IMSCP directory."""
-    print('Parsing imsmanifest.xml in %s' % ims_dir)
+    """Return a tree of topics and file paths from an IMSCP directory."""
+    logging.info('Parsing imsmanifest.xml in %s' % ims_dir)
     manifest_path = os.path.join(ims_dir, 'imsmanifest.xml')
     manifest_root = etree.parse(manifest_path).getroot()
     nsmap = manifest_root.nsmap
 
-    print('Extracting tree structure ...')
-    print()
+    logging.info('Extracting tree structure ...')
+    logging.info('')
 
     # NOTE: Can there be multiple organizations?
     organization = manifest_root.find('organizations/organization', nsmap)
@@ -64,49 +62,20 @@ def collect_resources(license, items_list, resources_dict, ims_dir):
         if item['children']:
             collect_resources(license, item['children'], resources_dict, ims_dir)
         else:
+            item['type'] = resource_elem.get('type')
             if resource_elem.get('type') == 'webcontent':
-                item['node'] = package_into_html5_app_node(
-                        license, item, resource_elem, resources_dict, ims_dir)
+                item['index_file'] = os.path.join(ims_dir, resource_elem.get('href'))
+                item['files'] = derive_content_files_dict(
+                        resource_elem, resources_dict, ims_dir)
 
 
-def package_into_html5_app_node(license, item, resource_elem, resources_dict, ims_dir):
+def derive_content_files_dict(resource_elem, resources_dict, ims_dir):
     nsmap = resource_elem.nsmap
-    with tempfile.TemporaryDirectory() as destination:
-        # Copy index file into our temporary directory and call it index.html
-        index_path = os.path.join(ims_dir, resource_elem.get('href'))
-        index_copy_path = os.path.join(destination, 'index.html')
-        shutil.copyfile(index_path, index_copy_path)
-
-        def copy_files(resource_elem):
-            for file_elem in resource_elem.findall('file', nsmap):
-                file_path = os.path.join(ims_dir, file_elem.get('href'))
-                shutil.copy(file_path, destination)
-
-            for dependency_elem in resource_elem.findall('dependency', nsmap):
-                dep_res_elem = resources_dict[dependency_elem.get('identifierref')]
-                copy_files(dep_res_elem)
-
-        # Copy files and recursively copy files in dependency elements into temp
-        # dir
-        copy_files(resource_elem)
-
-        #preview_in_browser(destination)
-
-        zip_path = create_predictable_zip(destination)
-        return nodes.HTML5AppNode(
-            source_id=item['identifier'],
-            title=item.get('title'),
-            license=license,
-            files=[files.HTMLZipFile(zip_path)],
-        )
-
-
-if __name__ == '__main__':
-    license = licenses.SpecialPermissionsLicense(
-        description="XXX",
-        copyright_holder="XXXX"
-    )
-    extracted_dict = extract_from_zip('eventos.zip', license)
-    import pprint
-    pprint.pprint(extracted_dict)
-
+    file_elements = resource_elem.findall('file', nsmap)
+    file_paths = [os.path.join(ims_dir, fe.get('href')) for fe in file_elements]
+    dep_elements = resource_elem.findall('dependency', nsmap)
+    dep_res_elements = (resources_dict[de.get('identifierref')] for de in dep_elements)
+    dep_paths_list = (derive_content_files_dict(dre, resources_dict, ims_dir)
+            for dre in dep_res_elements)
+    dep_paths = list(itertools.chain(*dep_paths_list))  # Flatten
+    return file_paths + dep_paths
