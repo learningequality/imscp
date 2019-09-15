@@ -1,3 +1,8 @@
+# Ricecooker specific
+storage
+restore
+.ricecookerfilecache
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

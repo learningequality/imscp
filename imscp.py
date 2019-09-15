@@ -9,6 +9,14 @@ import zipfile
 
 
 def extract_from_zip(zip_file_path, license, extract_path=None):
+    """Return a list of dicts of topic trees extracted from an IMSCP zip.
+
+    Args:
+        zip_file_path - Path to IMSCP zip file.
+        license - License to apply to content nodes.
+        extract_path (optional) - Path of directory to extract zip file to. If
+            not given, a temporary one will be created (but not cleaned up).
+    """
     if not extract_path:
         extract_path = tempfile.mkdtemp()
 
@@ -19,7 +27,14 @@ def extract_from_zip(zip_file_path, license, extract_path=None):
 
 
 def extract_from_dir(ims_dir, license):
-    """Return a tree of topics and file paths from an IMSCP directory."""
+    """Return list of dicts of topic trees extracted from an IMSCP directory.
+
+    Like extract_from_zip but assumes zip file has been extracted already.
+
+    Args:
+        ims_dir - Directory of extracted IMS Content Package.
+        license - License to apply to content nodes.
+    """
     logging.info('Parsing imsmanifest.xml in %s' % ims_dir)
     manifest_path = os.path.join(ims_dir, 'imsmanifest.xml')
     manifest_root = etree.parse(manifest_path).getroot()

@@ -11,6 +11,10 @@ def make_topic_tree(license, imscp_dict):
     """Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
     Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
+
+    Args:
+        license - License to apply to content nodes.
+        imscp_dict - Dict of IMSCP from extract_from_zip or extract_from_dir.
     """
     if imscp_dict.get('children'):
         topic_node = nodes.TopicNode(
