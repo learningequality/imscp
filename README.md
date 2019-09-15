@@ -8,7 +8,7 @@ This library extracts info from an IMSCP zip file and converts it into a ricecoo
 
 ## Usage
 
-### `imscp.extract_from_zip`
+#### `imscp.extract_from_zip`
 
 Return a list of dicts of topic trees extracted from an IMSCP zip.
 
@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory() as extract_path:
 ```
 
 
-### `imscp.extract_from_dir`
+#### `imscp.extract_from_dir`
 
 Return list of dicts of topic trees extracted from an IMSCP directory.
 
@@ -55,7 +55,7 @@ for topic_dict in imscp_dict:
 ```
 
 
-### `ricecooker_utils.make_topic_tree`
+#### `ricecooker_utils.make_topic_tree`
 
 Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
@@ -77,9 +77,9 @@ for topic_dict in imscp_dict:
 ```
 
 
-## Sample chef usage
+## Example chefs
 
-See examples in `examples/`.
+See example chefs using this library to upload to Studio in `examples/`.
 
 Run from the base project directory like the following:
 
