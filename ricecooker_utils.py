@@ -1,3 +1,5 @@
+from distutils.dir_util import copy_tree
+import logging
 import os
 import shutil
 import tempfile
@@ -7,7 +9,7 @@ from ricecooker.utils.zip import create_predictable_zip
 from ricecooker.utils.browser import preview_in_browser
 
 
-def make_topic_tree(license, imscp_dict):
+def make_topic_tree(license, imscp_dict, ims_dir):
     """Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
     Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
@@ -22,22 +24,36 @@ def make_topic_tree(license, imscp_dict):
             title=imscp_dict['title']
         )
         for child in imscp_dict['children']:
-            topic_node.add_child(make_topic_tree(license, child))
+            topic_node.add_child(make_topic_tree(license, child, ims_dir))
         return topic_node
     else:
         if imscp_dict['type'] == 'webcontent':
-            return create_html5_app_node(license, imscp_dict)
+            return create_html5_app_node(license, imscp_dict, ims_dir)
         else:
             raise 'Content type %s not supported yet.' % imscp_dict['type']
 
 
-def create_html5_app_node(license, content_dict):
+def create_html5_app_node(license, content_dict, ims_dir):
     with tempfile.TemporaryDirectory() as destination:
         index_copy_path = os.path.join(destination, 'index.html')
-        shutil.copyfile(content_dict['index_file'], index_copy_path)
+        destination_src = os.path.join(destination, 'imscp')
 
-        for file_path in content_dict['files']:
-            shutil.copy(file_path, destination)
+        logging.debug('Creating html5 app dir in %s' % destination)
+
+        with open(index_copy_path, 'w') as f:
+            f.write("""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <script type="text/javascript">
+                    window.location.replace('imscp/%s');
+                </script>
+                </head>
+                <body></body>
+                </html>
+            """ % content_dict['index_file'])
+
+        copy_tree(ims_dir, destination_src)
 
         #preview_in_browser(destination)
 

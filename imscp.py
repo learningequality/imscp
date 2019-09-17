@@ -79,7 +79,7 @@ def collect_resources(license, items_list, resources_dict, ims_dir):
         else:
             item['type'] = resource_elem.get('type')
             if resource_elem.get('type') == 'webcontent':
-                item['index_file'] = os.path.join(ims_dir, resource_elem.get('href'))
+                item['index_file'] = resource_elem.get('href')
                 item['files'] = derive_content_files_dict(
                         resource_elem, resources_dict, ims_dir)
 
@@ -87,7 +87,7 @@ def collect_resources(license, items_list, resources_dict, ims_dir):
 def derive_content_files_dict(resource_elem, resources_dict, ims_dir):
     nsmap = resource_elem.nsmap
     file_elements = resource_elem.findall('file', nsmap)
-    file_paths = [os.path.join(ims_dir, fe.get('href')) for fe in file_elements]
+    file_paths = [fe.get('href') for fe in file_elements]
     dep_elements = resource_elem.findall('dependency', nsmap)
     dep_res_elements = (resources_dict[de.get('identifierref')] for de in dep_elements)
     dep_paths_list = (derive_content_files_dict(dre, resources_dict, ims_dir)
