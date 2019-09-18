@@ -1,11 +1,13 @@
 import itertools
 import logging
-from lxml import etree
 import os
 import re
 import shutil
 import tempfile
 import zipfile
+
+from lxml import etree
+import xmltodict
 
 
 def extract_from_zip(zip_file_path, license, extract_path=None):
@@ -43,45 +45,80 @@ def extract_from_dir(ims_dir, license):
     logging.info('Extracting tree structure ...')
     logging.info('')
 
-    # NOTE: Can there be multiple organizations?
-    organization = manifest_root.find('organizations/organization', nsmap)
-    organization_items = walk_items(organization)
+    metadata_elem = manifest_root.find('metadata', nsmap)
+    metadata = collect_metadata(metadata_elem)
 
     resources_elem = manifest_root.find('resources', nsmap)
     resources_dict = dict((r.get('identifier'), r) for r in resources_elem)
 
-    collect_resources(license, organization_items, resources_dict, ims_dir)
+    # TODO(davidhu): Also collect <metadata>s from within <item>s
+    organizations = []
+    for org_elem in manifest_root.findall('organizations/organization', nsmap):
+        item_tree = walk_items(org_elem)
+        collect_resources(license, item_tree, resources_dict, ims_dir)
+        organizations.append(item_tree)
 
-    return organization_items
+    return {
+        'metadata': metadata,
+        'organizations': organizations,
+    }
 
 
 def walk_items(root):
-    items_list = []
+    root_dict = dict(root.items())
+    title_elem = root.find('title', root.nsmap)
+    if title_elem is not None:
+        root_dict['title'] = title_elem.text
 
+    children = []
     for item in root.findall('item', root.nsmap):
-        item_dict = dict(item.items())
+        children.append(walk_items(item))
 
-        title_elem = item.find('title', item.nsmap)
-        if title_elem is not None:
-            item_dict['title'] = title_elem.text
+    if children:
+        root_dict['children'] = children
 
-        item_dict['children'] = walk_items(item)
-        items_list.append(item_dict)
-
-    return items_list
+    return root_dict
 
 
-def collect_resources(license, items_list, resources_dict, ims_dir):
-    for item in items_list:
+def collect_metadata(metadata_elem):
+    strip_ns_prefix(metadata_elem)
+    strip_langstring(metadata_elem)
+    metadata_dict = {}
+
+    for tag in ('general', 'rights', 'educational', 'lifecycle'):
+        elem = metadata_elem.find('lom/%s' % tag)
+        metadata_dict[tag] = xmltodict.parse(etree.tostring(elem))
+
+    return metadata_dict
+
+
+def strip_ns_prefix(tree):
+    """Strip namespace prefixes from an LXML tree.
+
+    From https://stackoverflow.com/a/30233635
+    """
+    for element in tree.xpath("descendant-or-self::*[namespace-uri()!='']"):
+        element.tag = etree.QName(element).localname
+
+
+def strip_langstring(tree):
+    """Replace all langstring elements with their text value."""
+    for ls in tree.xpath(".//langstring"):
+        ls.tail = ls.text + ls.tail if ls.tail else ls.text
+    etree.strip_elements(tree, 'langstring', with_tail=False)
+
+
+def collect_resources(license, item, resources_dict, ims_dir):
+    if item.get('children'):
+        for child in item['children']:
+            collect_resources(license, child, resources_dict, ims_dir)
+    elif item.get('identifierref'):
         resource_elem = resources_dict[item['identifierref']]
-        if item['children']:
-            collect_resources(license, item['children'], resources_dict, ims_dir)
-        else:
-            item['type'] = resource_elem.get('type')
-            if resource_elem.get('type') == 'webcontent':
-                item['index_file'] = resource_elem.get('href')
-                item['files'] = derive_content_files_dict(
-                        resource_elem, resources_dict, ims_dir)
+        item['type'] = resource_elem.get('type')
+        if resource_elem.get('type') == 'webcontent':
+            item['index_file'] = resource_elem.get('href')
+            item['files'] = derive_content_files_dict(
+                    resource_elem, resources_dict, ims_dir)
 
 
 def derive_content_files_dict(resource_elem, resources_dict, ims_dir):

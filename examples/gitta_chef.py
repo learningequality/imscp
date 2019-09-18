@@ -46,11 +46,14 @@ class SampleGittaChef(SushiChef):
         with tempfile.TemporaryDirectory() as extract_path:
             imscp_dict = extract_from_zip(
                     'examples/gitta_ims.zip', license, extract_path)
-            for topic_dict in imscp_dict:
+            for topic_dict in imscp_dict['organizations']:
                 topic_tree = make_topic_tree(license, topic_dict, extract_path)
                 print('Adding topic tree to channel:', topic_tree)
                 channel.add_child(topic_tree)
 
+        import pprint
+        print('--- metadata ---')
+        pprint.pprint(imscp_dict['metadata'])
 
         return channel
 
