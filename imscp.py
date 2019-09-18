@@ -66,9 +66,14 @@ def extract_from_dir(ims_dir, license):
 
 def walk_items(root):
     root_dict = dict(root.items())
+
     title_elem = root.find('title', root.nsmap)
     if title_elem is not None:
         root_dict['title'] = title_elem.text
+
+    metadata_elem = root.find('metadata', root.nsmap)
+    if metadata_elem is not None:
+        root_dict['metadata'] = collect_metadata(metadata_elem)
 
     children = []
     for item in root.findall('item', root.nsmap):
