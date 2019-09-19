@@ -92,7 +92,7 @@ def collect_metadata(metadata_elem):
 
     for tag in ('general', 'rights', 'educational', 'lifecycle'):
         elem = metadata_elem.find('lom/%s' % tag)
-        metadata_dict[tag] = xmltodict.parse(etree.tostring(elem))
+        metadata_dict.update(xmltodict.parse(etree.tostring(elem)))
 
     return metadata_dict
 
