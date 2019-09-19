@@ -46,8 +46,7 @@ def extract_from_dir(ims_dir, license):
     manifest_root = etree.parse(manifest_path).getroot()
     nsmap = manifest_root.nsmap
 
-    logging.info('Extracting tree structure ...')
-    logging.info('')
+    logging.info('Extracting tree structure ...\n')
 
     metadata_elem = manifest_root.find('metadata', nsmap)
     metadata = collect_metadata(metadata_elem)
@@ -55,7 +54,6 @@ def extract_from_dir(ims_dir, license):
     resources_elem = manifest_root.find('resources', nsmap)
     resources_dict = dict((r.get('identifier'), r) for r in resources_elem)
 
-    # TODO(davidhu): Also collect <metadata>s from within <item>s
     organizations = []
     for org_elem in manifest_root.findall('organizations/organization', nsmap):
         item_tree = walk_items(org_elem)
