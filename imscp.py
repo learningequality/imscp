@@ -11,7 +11,9 @@ import xmltodict
 
 
 def extract_from_zip(zip_file_path, license, extract_path=None):
-    """Return a list of dicts of topic trees extracted from an IMSCP zip.
+    """Extract metadata and topic tree info from an IMSCP zip.
+
+    Return a dict {'metadata': {...}, 'organizations': [list of topic dicts]}
 
     Args:
         zip_file_path - Path to IMSCP zip file.
@@ -29,7 +31,9 @@ def extract_from_zip(zip_file_path, license, extract_path=None):
 
 
 def extract_from_dir(ims_dir, license):
-    """Return list of dicts of topic trees extracted from an IMSCP directory.
+    """Extract metadata and topic tree info from an IMSCP directory.
+
+    Return a dict {'metadata': {...}, 'organizations': [list of topic dicts]}
 
     Like extract_from_zip but assumes zip file has been extracted already.
 

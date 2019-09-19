@@ -51,9 +51,9 @@ class SampleGittaChef(SushiChef):
                 print('Adding topic tree to channel:', topic_tree)
                 channel.add_child(topic_tree)
 
-        import pprint
         print('--- metadata ---')
-        pprint.pprint(imscp_dict['metadata'])
+        import json
+        print(json.dumps(imscp_dict['metadata'], indent=4))
 
         return channel
 
