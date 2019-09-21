@@ -30,7 +30,7 @@ def make_topic_tree(license, imscp_dict, ims_dir):
         if imscp_dict['type'] == 'webcontent':
             return create_html5_app_node(license, imscp_dict, ims_dir)
         else:
-            logging.warn(
+            logging.warning(
                     'Content type %s not supported yet.' % imscp_dict['type'])
 
 
