@@ -10,7 +10,9 @@ This library extracts info from an IMSCP zip file and converts it into a ricecoo
 
 #### `imscp.extract_from_zip`
 
-Return a list of dicts of topic trees extracted from an IMSCP zip.
+Extract metadata and topic tree info from an IMSCP zip.
+
+Return a dict `{'metadata': {...}, 'organizations': [list of topic dicts]}`
 
 Args:
 
@@ -21,20 +23,24 @@ Args:
 Sample usage:
 
 ```
+import pprint
 import tempfile
 from ricecooker.classes import licenses
 
 license = licenses.CC_BY_SALicense(copyright_holder="CeDeC")
 with tempfile.TemporaryDirectory() as extract_path:
     imscp_dict = extract_from_zip('eventos.zip', license, extract_path)
-    for topic_dict in imscp_dict:
-        print(topic_tree)
+    pprint.pprint(imscp_dict['metadata'])
+    for topic_dict in imscp_dict['organizations']:
+        pprint.pprint(topic_dict)
 ```
 
 
 #### `imscp.extract_from_dir`
 
-Return list of dicts of topic trees extracted from an IMSCP directory.
+Extract metadata and topic tree info from an IMSCP directory.
+
+Return a dict `{'metadata': {...}, 'organizations': [list of topic dicts]}`
 
 Like `extract_from_zip` but assumes zip file has been extracted already.
 
@@ -50,7 +56,8 @@ from ricecooker.classes import licenses
 
 license = licenses.CC_BY_SALicense(copyright_holder="CeDeC")
 imscp_dict = extract_from_dir('eventos', license)
-for topic_dict in imscp_dict:
+print('metadata', imscp_dict['metadata'])
+for topic_dict in imscp_dict['organizations']:
     print(topic_dict)
 ```
 
@@ -64,14 +71,14 @@ Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
 Args:
 
 - `license` - License to apply to content nodes.
-- `imscp_dict` - Dict of IMSCP from extract_from_zip or extract_from_dir.
+- `imscp_dict` - IMSCP topic tree dict from `extract_from_zip` or `extract_from_dir`.
 
 Sample usage:
 
 ```
 channel = self.get_channel()
 imscp_dict = extract_from_dir('eventos', license)
-for topic_dict in imscp_dict:
+for topic_dict in imscp_dict['organizations']:
     topic_tree = make_topic_tree(license, topic_dict)
     channel.add_child(topic_tree)
 ```
