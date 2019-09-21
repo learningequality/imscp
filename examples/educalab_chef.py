@@ -43,7 +43,7 @@ class SampleEducalabChef(SushiChef):
         channel = self.get_channel()
 
         license = licenses.CC_BY_SALicense(copyright_holder="CeDeC")
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.INFO)
 
         with tempfile.TemporaryDirectory() as extract_path:
             imscp_dict = extract_from_zip('examples/eventos.zip', license, extract_path)

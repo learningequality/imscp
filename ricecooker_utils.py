@@ -30,15 +30,14 @@ def make_topic_tree(license, imscp_dict, ims_dir):
         if imscp_dict['type'] == 'webcontent':
             return create_html5_app_node(license, imscp_dict, ims_dir)
         else:
-            raise 'Content type %s not supported yet.' % imscp_dict['type']
+            logging.warn(
+                    'Content type %s not supported yet.' % imscp_dict['type'])
 
 
 def create_html5_app_node(license, content_dict, ims_dir):
     with tempfile.TemporaryDirectory() as destination:
         index_copy_path = os.path.join(destination, 'index.html')
         destination_src = os.path.join(destination, 'imscp')
-
-        logging.debug('Creating html5 app dir in %s' % destination)
 
         with open(index_copy_path, 'w') as f:
             f.write("""
