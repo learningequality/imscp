@@ -13,6 +13,7 @@ import tempfile
 
 from ricecooker.chefs import SushiChef
 from ricecooker.classes import licenses
+from webmixer.scrapers.pages.base import DefaultScraper
 
 from imscp import extract_from_zip
 from ricecooker_utils import make_topic_tree
@@ -47,7 +48,9 @@ class SampleGittaChef(SushiChef):
             imscp_dict = extract_from_zip(
                     'examples/gitta_ims.zip', license, extract_path)
             for topic_dict in imscp_dict['organizations']:
-                topic_tree = make_topic_tree(license, topic_dict, extract_path)
+                topic_tree = make_topic_tree(license, topic_dict,
+                        extract_path, scraper_class=DefaultScraper,
+                        temp_dir=kwargs.get('temp_dir'))
                 print('Adding topic tree to channel:', topic_tree)
                 channel.add_child(topic_tree)
 
@@ -62,5 +65,6 @@ if __name__ == '__main__':
     """
     This code will run when the sushi chef is called from the command line.
     """
-    chef = SampleGittaChef()
-    chef.main()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        chef = SampleGittaChef(temp_dir=temp_dir)
+        chef.main()
