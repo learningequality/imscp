@@ -71,15 +71,21 @@ Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
 Args:
 
 - `license` - License to apply to content nodes.
-- `imscp_dict` - IMSCP topic tree dict from `extract_from_zip` or `extract_from_dir`.
+- `imscp_dict` - Dict of IMSCP from `extract_from_zip` or `extract_from_dir`.
+- `ims_dir (string)` - Path of directory of IMSCP
+- `scraper_class (webmixer.HTMLPageScraper class, optional)` - Webmixer scraper class to use for pruning an HTML page.
+- `temp_dir (string, optional)` - Full path of temporary directory to output HTML zip files to.
 
-Sample usage:
+Sample usage with Webmixer:
 
 ```
+from webmixer.scrapers.pages.base import DefaultScraper
+
 channel = self.get_channel()
 imscp_dict = extract_from_dir('eventos', license)
 for topic_dict in imscp_dict['organizations']:
-    topic_tree = make_topic_tree(license, topic_dict)
+    topic_tree = make_topic_tree(license, topic_dict, 'eventos',
+        scraper_class=DefaultScraper)
     channel.add_child(topic_tree)
 ```
 
