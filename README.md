@@ -68,6 +68,8 @@ Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
 Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
 
+By default, this will take the entire IMS directory and use that for each app uploaded. (Some imsmanifest.xml don't completely specify all required dependencies.) However, you can specify a Webmixer class to use, to use Webmixer to determine which files are needed and just package those with the app.
+
 Args:
 
 - `license` - License to apply to content nodes.
