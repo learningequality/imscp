@@ -49,7 +49,9 @@ def extract_from_dir(ims_dir, license):
     logging.info('Extracting tree structure ...\n')
 
     metadata_elem = manifest_root.find('metadata', nsmap)
-    metadata = collect_metadata(metadata_elem)
+    metadata = {}
+    if metadata_elem is not None:
+        metadata = collect_metadata(metadata_elem)
 
     resources_elem = manifest_root.find('resources', nsmap)
     resources_dict = dict((r.get('identifier'), r) for r in resources_elem)
@@ -94,7 +96,8 @@ def collect_metadata(metadata_elem):
 
     for tag in ('general', 'rights', 'educational', 'lifecycle'):
         elem = metadata_elem.find('lom/%s' % tag)
-        metadata_dict.update(xmltodict.parse(etree.tostring(elem)))
+        if elem:
+            metadata_dict.update(xmltodict.parse(etree.tostring(elem)))
 
     return metadata_dict
 
