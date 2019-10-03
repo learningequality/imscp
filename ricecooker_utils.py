@@ -57,25 +57,15 @@ def create_html5_app_node(license, content_dict, ims_dir, scraper_class=None,
         scraper.download_file(zip_path)
     else:
         with tempfile.TemporaryDirectory() as destination:
-            index_copy_path = os.path.join(destination, 'index.html')
-            destination_src = os.path.join(destination, 'imscp')
+            index_src_path = os.path.join(ims_dir, content_dict['index_file'])
+            index_dest_path = os.path.join(destination, 'index.html')
+            shutil.copyfile(index_src_path, index_dest_path)
 
-            with open(index_copy_path, 'w') as f:
-                f.write("""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                    <script type="text/javascript">
-                        window.location.replace('imscp/%s');
-                    </script>
-                    </head>
-                    <body></body>
-                    </html>
-                """ % content_dict['index_file'])
+            for file_path in content_dict['files']:
+                shutil.copy(os.path.join(ims_dir, file_path), destination)
 
-            copy_tree(ims_dir, destination_src)
-            zip_path = create_predictable_zip(destination)
             #preview_in_browser(destination)
+            zip_path = create_predictable_zip(destination)
 
     return nodes.HTML5AppNode(
         source_id=content_dict['identifier'],

@@ -68,7 +68,7 @@ Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
 Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
 
-By default, this will take the entire IMS directory and use that for each app uploaded. (Some imsmanifest.xml don't completely specify all required dependencies.) However, you can specify a Webmixer class to use, to use Webmixer to determine which files are needed and just package those with the app.
+By default, for each HTML app, this will package together files that the imsmanifest.xml specifies as its required files and dependencies. You can also specify a Webmixer class to use, to use Webmixer to determine which files are needed and package those with the app. This will ignore specified required files from the manifest.
 
 Args:
 
