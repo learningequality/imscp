@@ -2,3 +2,4 @@ lxml==4.4.1
 ricecooker>=0.6.33
 xmltodict==0.12.0
 webmixer>=0.0.1
+beautifulsoup4>=4.8.0

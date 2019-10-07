@@ -124,7 +124,12 @@ def collect_resources(license, item, resources_dict, ims_dir):
             collect_resources(license, child, resources_dict, ims_dir)
     elif item.get('identifierref'):
         resource_elem = resources_dict[item['identifierref']]
-        item['type'] = resource_elem.get('type')
+
+        # Add all resource attrs to item dict
+        for key, value in resource_elem.items():
+            key_stripped = re.sub('^{.*}', '', key) # Strip any namespace prefix
+            item[key_stripped] = value
+
         if resource_elem.get('type') == 'webcontent':
             item['index_file'] = resource_elem.get('href')
             item['files'] = derive_content_files_dict(
