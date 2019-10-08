@@ -16,6 +16,7 @@ import tempfile
 
 from ricecooker.chefs import SushiChef
 from ricecooker.classes import licenses
+from webmixer.scrapers.pages.base import DefaultScraper
 
 from imscp import extract_from_zip
 from ricecooker_utils import make_topic_tree
@@ -29,7 +30,7 @@ class SampleEducalabChef(SushiChef):
     """
     channel_info = {
         'CHANNEL_SOURCE_DOMAIN': "sample-imscp.procomun.educalab.es",
-        'CHANNEL_SOURCE_ID': "sample-imscp-procomun-educalab",
+        'CHANNEL_SOURCE_ID': "sample-imscp-procomun-educalab-no-webmixer",
         'CHANNEL_TITLE': "Sample IMSCP upload from procomun.educalab.es",
         'CHANNEL_DESCRIPTION': "Sample Sushi Chef that uses the IMSCP library to upload a channel from procomun.educalab.es",
         'CHANNEL_LANGUAGE': "es",
@@ -46,9 +47,10 @@ class SampleEducalabChef(SushiChef):
         logging.basicConfig(level=logging.INFO)
 
         with tempfile.TemporaryDirectory() as extract_path:
-            imscp_dict = extract_from_zip('examples/eventos.zip', license, extract_path)
+            imscp_dict = extract_from_zip('examples/eventos.zip', license,
+                    extract_path)
             for topic_dict in imscp_dict['organizations']:
-                topic_tree = make_topic_tree(license, topic_dict)
+                topic_tree = make_topic_tree(license, topic_dict, extract_path)
                 print('Adding topic tree to channel:', topic_tree)
                 channel.add_child(topic_tree)
 
