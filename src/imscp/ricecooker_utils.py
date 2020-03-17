@@ -5,12 +5,28 @@ import os
 import pathlib
 import shutil
 import tempfile
+import uuid
 
 from bs4 import BeautifulSoup
+
+from le_utils.constants import format_presets
 
 from ricecooker.classes import nodes, files, licenses
 from ricecooker.utils.zip import create_predictable_zip
 from ricecooker.utils.browser import preview_in_browser
+
+
+ENTRYPOINT_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+   <head>
+      <title>HTML Meta Tag</title>
+      <meta http-equiv = "refresh" content = "0; url = {}" />
+   </head>
+   <body>
+   </body>
+</html>
+"""
 
 
 def make_topic_tree(license, imscp_dict, ims_dir, scraper_class=None,
@@ -30,7 +46,7 @@ def make_topic_tree(license, imscp_dict, ims_dir, scraper_class=None,
     """
     if imscp_dict.get('children'):
         topic_node = nodes.TopicNode(
-            source_id=imscp_dict['identifier'],
+            source_id=str(uuid.uuid4()),
             title=imscp_dict['title']
         )
         for child in imscp_dict['children']:
@@ -47,12 +63,72 @@ def make_topic_tree(license, imscp_dict, ims_dir, scraper_class=None,
                     'Content type %s not supported yet.' % imscp_dict['type'])
 
 
-def create_html5_app_node(license, content_dict, ims_dir, scraper_class=None,
+def make_topic_tree_with_entrypoints(license, imscp_zip, imscp_dict, ims_dir,
         temp_dir=None):
+    """Return a TopicTree node from a dict of some subset of an IMSCP manifest.
+
+    The actual IMSCP zip is marked as a dependency, and the zip loaded by Kolibri
+    only contains an index.html file that redirects to the entrypoint defined in
+    the manifest. This minimizes the additional content generated for Kolibri,
+    and also allows us to support content where multiple content nodes have entrypoints
+    defined by parameters, e.g. index.html#chapter2, index.html#chapter3, etc.
+
+    Ready to be uploaded via Ricecooker to Studio or used in Kolibri.
+
+    Args:
+        license - License to apply to content nodes.
+        imscp_dict - Dict of IMSCP from extract_from_zip or extract_from_dir.
+        ims_dir (string) - Path of directory of IMSCP
+        scraper_class (webmixer.HTMLPageScraper class, optional):
+            Webmixer scraper class to use for pruning an HTML page.
+        temp_dir (string, optional) - Full path of temporary directory to
+            output HTML zip files to.
+    """
+    if imscp_dict.get('children'):
+        topic_node = nodes.TopicNode(
+            source_id=str(uuid.uuid4()),
+            title=imscp_dict['title']
+        )
+        for child in imscp_dict['children']:
+            topic_node.add_child(make_topic_tree_with_entrypoints(
+                    license, imscp_zip, child, ims_dir,
+                    temp_dir=temp_dir))
+        return topic_node
+    else:
+        if imscp_dict['type'] == 'webcontent':
+            entrypoint_dir = os.path.join(temp_dir, 'entrypoint')
+            if os.path.exists(entrypoint_dir):
+                shutil.rmtree(entrypoint_dir)
+            os.makedirs(entrypoint_dir)
+            index = os.path.join(entrypoint_dir, "index.html")
+            entrypoint_url = '/zipcontent/{}/{}'.format(os.path.basename(imscp_zip), imscp_dict['href'])
+            f = open(index, "w", encoding="utf-8")
+            f.write(ENTRYPOINT_TEMPLATE.format(entrypoint_url))
+            f.close()
+
+            zip_path = create_predictable_zip(entrypoint_dir)
+            return nodes.HTML5AppNode(
+                source_id=str(uuid.uuid4()),
+                title=imscp_dict.get('title'),
+                license=license,
+                files=[files.HTMLZipFile(zip_path),
+                       files.HTMLZipFile(imscp_zip, preset=format_presets.HTML5_DEPENDENCY_ZIP)],
+            )
+        else:
+            logging.warning(
+                    'Content type %s not supported yet.' % imscp_dict['type'])
+
+
+def create_html5_app_node(license, content_dict, ims_dir, scraper_class=None,
+        temp_dir=None, needs_scorm_support=False):
     if scraper_class:
         index_path = os.path.join(ims_dir, content_dict['index_file'])
 
-        if content_dict['scormtype'] == 'sco':
+        if '?' in index_path:
+            index_path = index_path.split('?')[0]
+        if '#' in index_path:
+            index_path = index_path.split('#')[0]
+        if content_dict['scormtype'] == 'sco' and needs_scorm_support:
             add_scorm_support(index_path, ims_dir)
 
         index_uri = pathlib.Path(os.path.abspath(index_path)).as_uri()
@@ -72,7 +148,7 @@ def create_html5_app_node(license, content_dict, ims_dir, scraper_class=None,
             for file_path in content_dict['files']:
                 shutil.copy(os.path.join(ims_dir, file_path), destination)
 
-            if content_dict.get('scormtype') == 'sco':
+            if content_dict.get('scormtype') == 'sco' and needs_scorm_support:
                 add_scorm_support(index_dest_path, destination)
 
             #preview_in_browser(destination)

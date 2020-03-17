@@ -1,3 +1,4 @@
+import io
 import itertools
 import logging
 import os
@@ -6,6 +7,7 @@ import shutil
 import tempfile
 import zipfile
 
+import chardet
 from lxml import etree
 import xmltodict
 
@@ -43,7 +45,19 @@ def extract_from_dir(ims_dir, license):
     """
     logging.info('Parsing imsmanifest.xml in %s' % ims_dir)
     manifest_path = os.path.join(ims_dir, 'imsmanifest.xml')
-    manifest_root = etree.parse(manifest_path).getroot()
+    try:
+        manifest_root = etree.parse(manifest_path).getroot()
+    except etree.XMLSyntaxError:
+        # we've run across XML files that are marked as UTF-8 encoded but which have non-UTF-8 characters in them
+        # for this case, detect the 'real' encoding and decode it as unicode, then make it actual UTF-8 and parse.
+        f = open(manifest_path, 'rb')
+        data = f.read()
+        f.close()
+
+        info = chardet.detect(data)
+        data = data.decode(info['encoding'])
+        manifest_root = etree.parse(io.BytesIO(data.encode('utf-8'))).getroot()
+
     nsmap = manifest_root.nsmap
 
     logging.info('Extracting tree structure ...\n')
