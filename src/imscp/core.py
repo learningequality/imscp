@@ -77,6 +77,7 @@ def extract_from_dir(ims_dir, license):
         organizations.append(item_tree)
 
     return {
+        'identifier': manifest_root.get('identifier'),
         'metadata': metadata,
         'organizations': organizations,
     }
