@@ -88,7 +88,16 @@ def walk_items(root):
 
     title_elem = root.find('title', root.nsmap)
     if title_elem is not None:
-        root_dict['title'] = title_elem.text
+        # title_elem.text has issues when there are BR tags. Instead get ALL text, ignoring BR tags.
+        # As BR tags do not make sense in metadata, we can assume it's an editor glitch causing it.
+        text = ''
+        for child in title_elem.iter():
+            if child.text:
+                text += child.text
+            if child.tail:
+                text += child.tail
+        assert text.strip(), "Title element has no title: {}".format(etree.tostring(title_elem, pretty_print=True))
+        root_dict['title'] = text.strip()
 
     metadata_elem = root.find('metadata', root.nsmap)
     if metadata_elem is not None:
