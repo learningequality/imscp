@@ -64,7 +64,7 @@ def make_topic_tree(license, imscp_dict, ims_dir, scraper_class=None,
 
 
 def make_topic_tree_with_entrypoints(license, imscp_zip, imscp_dict, ims_dir,
-        temp_dir=None):
+        temp_dir=None, parent_id=None, node_options=None):
     """Return a TopicTree node from a dict of some subset of an IMSCP manifest.
 
     The actual IMSCP zip is marked as a dependency, and the zip loaded by Kolibri
@@ -83,16 +83,29 @@ def make_topic_tree_with_entrypoints(license, imscp_zip, imscp_dict, ims_dir,
             Webmixer scraper class to use for pruning an HTML page.
         temp_dir (string, optional) - Full path of temporary directory to
             output HTML zip files to.
+        parent_id (string, optional) - Parent ID string to concatenate to source ID.
+        node_options (dict, optional) - Options to pass to content renderer in Kolibri.
     """
+
+    source_id = imscp_dict['identifier']
+    assert source_id, "{} has no identifier, parent id = {}".format(os.path.basename(imscp_zip), parent_id)
+    if parent_id:
+        source_id = '{}-{}'.format(parent_id, source_id)
+
     if imscp_dict.get('children'):
         topic_node = nodes.TopicNode(
-            source_id=str(uuid.uuid4()),
+            source_id=source_id,
             title=imscp_dict['title']
         )
+        counter = 1
         for child in imscp_dict['children']:
+            # We will get duplicate IDs if we don't have any ID set.
+            if not child['identifier']:
+                child['identifier'] = 'item{}'.format(counter)
             topic_node.add_child(make_topic_tree_with_entrypoints(
                     license, imscp_zip, child, ims_dir,
-                    temp_dir=temp_dir))
+                    temp_dir=temp_dir, parent_id=source_id, node_options=node_options))
+            counter += 1
         return topic_node
     else:
         if imscp_dict['type'] == 'webcontent':
@@ -107,13 +120,19 @@ def make_topic_tree_with_entrypoints(license, imscp_zip, imscp_dict, ims_dir,
             f.close()
 
             zip_path = create_predictable_zip(entrypoint_dir)
-            return nodes.HTML5AppNode(
-                source_id=str(uuid.uuid4()),
+            html5_node = nodes.HTML5AppNode(
+                source_id=source_id,
                 title=imscp_dict.get('title'),
                 license=license,
                 files=[files.HTMLZipFile(zip_path),
                        files.HTMLZipFile(imscp_zip, preset=format_presets.HTML5_DEPENDENCY_ZIP)],
             )
+            if node_options is not None:
+                extra_data = {'options': node_options}
+
+                html5_node.extra_fields.update(extra_data)
+
+            return html5_node
         else:
             logging.warning(
                     'Content type %s not supported yet.' % imscp_dict['type'])
