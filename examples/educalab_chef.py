@@ -12,6 +12,7 @@ Assumes the above is downloaded as "eventos.zip" in examples/ directory.
 """
 
 import logging
+import os
 import tempfile
 
 from ricecooker.chefs import SushiChef
@@ -19,6 +20,8 @@ from ricecooker.classes import licenses
 
 from imscp.core import extract_from_zip
 from imscp.ricecooker_utils import make_topic_tree
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 class SampleEducalabChef(SushiChef):
@@ -46,7 +49,7 @@ class SampleEducalabChef(SushiChef):
         logging.basicConfig(level=logging.INFO)
 
         with tempfile.TemporaryDirectory() as extract_path:
-            imscp_dict = extract_from_zip('examples/eventos.zip', license,
+            imscp_dict = extract_from_zip(os.path.join(script_dir, 'eventos.zip'), license,
                     extract_path)
             for topic_dict in imscp_dict['organizations']:
                 topic_tree = make_topic_tree(license, topic_dict, extract_path)
