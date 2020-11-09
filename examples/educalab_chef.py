@@ -16,10 +16,9 @@ import tempfile
 
 from ricecooker.chefs import SushiChef
 from ricecooker.classes import licenses
-from webmixer.scrapers.pages.base import DefaultScraper
 
-from imscp import extract_from_zip
-from ricecooker_utils import make_topic_tree
+from imscp.core import extract_from_zip
+from imscp.ricecooker_utils import make_topic_tree
 
 
 class SampleEducalabChef(SushiChef):
