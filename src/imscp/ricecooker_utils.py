@@ -86,6 +86,8 @@ def make_topic_tree_with_entrypoints(license, imscp_zip, imscp_dict, ims_dir,
         parent_id (string, optional) - Parent ID string to concatenate to source ID.
         node_options (dict, optional) - Options to pass to content renderer in Kolibri.
     """
+    if not temp_dir:
+        temp_dir = tempfile.tempdir
 
     source_id = imscp_dict['identifier']
     assert source_id, "{} has no identifier, parent id = {}".format(os.path.basename(imscp_zip), parent_id)
