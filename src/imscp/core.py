@@ -163,7 +163,7 @@ def collect_resources(license, item, resources_dict, ims_dir):
 def derive_content_files_dict(resource_elem, resources_dict, ims_dir):
     nsmap = resource_elem.nsmap
     file_elements = resource_elem.findall('file', nsmap)
-    base = "./" + resource_elem.get('{http://www.w3.org/XML/1998/namespace}base') or ""
+    base = "./" + (resource_elem.get('{http://www.w3.org/XML/1998/namespace}base') or "")
     file_paths = [base + fe.get('href') for fe in file_elements]
     dep_elements = resource_elem.findall('dependency', nsmap)
     dep_res_elements = (resources_dict[de.get('identifierref')] for de in dep_elements)
